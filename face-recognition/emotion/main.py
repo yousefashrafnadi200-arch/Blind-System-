@@ -5,6 +5,7 @@ import cv2
 from camera import CameraStream
 
 from emotion import EmotionDetector
+from emotion.detector import MediaPipeEmotionBackend
 
 
 WINDOW_NAME = "Emotion"
@@ -15,7 +16,11 @@ def main() -> None:
     print("Face Emotion Detection")
     print("=" * 50)
 
-    detector = EmotionDetector()
+    detector = EmotionDetector(
+        backend=MediaPipeEmotionBackend(
+            model_asset_path="https://storage.googleapis.com/mediapipe-models/face/emotion/EffortEmotionRecognizer/EffortEmotionRecognizer.task"
+        )
+    )
 
     camera = CameraStream(mirror=True)
 
@@ -33,7 +38,12 @@ def main() -> None:
                 time.sleep(0.005)
                 continue
 
-            emotion = detector.detect(frame)
+            try:
+                emotion = detector.detect(frame)
+            except Exception as exc:
+                # Emotion backend not configured / model unavailable yet.
+                emotion = "unavailable"
+                print(f"Emotion detection unavailable: {exc}")
 
             height, width = frame.shape[:2]
             cv2.putText(
