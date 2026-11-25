@@ -10,6 +10,16 @@
             "console": "integratedTerminal",
             "python": "C:\\Users\\original\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
             "justMyCode": true
+        },
+        {
+            "name": "Python: face-recognition/emotion",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}\\face-recognition\\emotion\\main.py",
+            "cwd": "${workspaceFolder}\\face-recognition",
+            "console": "integratedTerminal",
+            "python": "C:\\Users\\original\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+            "justMyCode": true
         }
     ]
 }
