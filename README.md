@@ -7,6 +7,7 @@
 | مجلد | الوصف |
 |---|---|
 | [`face-recognition/`](./face-recognition) | نظام التعرف على الوجوه: كاميرا + InsightFace + قاعدة بيانات الأشخاص. [README](./face-recognition/README.md) |
+| [`emotion/`](./emotion) | **وحدة مستقلة**: كشف مشاعر الوجه (سعادة/حزن/غضب/...). [README](./emotion/README.md) |
 
 قريبًا: وحدات (modules) إضافية أخرى ستُضاف في جذور الريبو.
 
