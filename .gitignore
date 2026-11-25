@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.pt
+*.pth
+embeddings.npz
+.env
+.idea/
+*.swp

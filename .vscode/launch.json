@@ -1,0 +1,15 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: face-recognition",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}\\face-recognition\\main.py",
+            "cwd": "${workspaceFolder}\\face-recognition",
+            "console": "integratedTerminal",
+            "python": "C:\\Users\\original\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+            "justMyCode": true
+        }
+    ]
+}
