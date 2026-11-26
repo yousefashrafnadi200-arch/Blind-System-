@@ -1,7 +1,14 @@
 import os
+import sys
 import time
 
 import cv2
+
+# Make the parent folder (face-recognition/) importable when this file is run
+# directly as a script, e.g. `python emotion/main.py` or VS Code's F5.
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
 
 from camera import CameraStream
 
