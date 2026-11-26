@@ -21,7 +21,7 @@ WINDOW_NAME = "Emotion"
 MODEL_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
     "models",
-    "emotion-ferplus-8.onnx",
+    "enet_b0_8_best_vgaf.onnx",
 )
 
 
