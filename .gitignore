@@ -4,6 +4,7 @@ __pycache__/
 venv/
 *.pt
 *.pth
+*.onnx
 embeddings.npz
 .env
 .idea/

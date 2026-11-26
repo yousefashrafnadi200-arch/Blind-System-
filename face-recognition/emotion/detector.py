@@ -1,3 +1,4 @@
+import os
 from typing import Callable, Optional, Sequence
 
 
@@ -15,19 +16,20 @@ class EmotionDetector:
     it can be built, tested and run on its own.
 
     A backend/classifier callable receives a frame (numpy array, BGR like OpenCV)
-    and returns the emotion label (e.g. "happy").
+    and returns the emotion label (e.g. "happiness").
     """
 
     def __init__(
         self,
         emotions: Sequence[str] = (
             "neutral",
-            "happy",
-            "sad",
-            "angry",
-            "surprised",
-            "fear",
+            "happiness",
+            "surprise",
+            "sadness",
+            "anger",
             "disgust",
+            "fear",
+            "contempt",
         ),
         predictor: Optional[Callable[[object], Optional[str]]] = None,
         backend: Optional[EmotionBackend] = None,
@@ -58,80 +60,103 @@ class EmotionDetector:
         return str(label or "unknown")
 
 
-class MediaPipeEmotionBackend(EmotionBackend):
-    """Emotion backend powered by Google MediaPipe emotion recognition."""
+class OnnxEmotionBackend(EmotionBackend):
+    """Emotion backend using the FER+ ONNX model with onnxruntime.
 
-    def __init__(self, model_asset_path: Optional[str] = None):
-        self.model_asset_path = model_asset_path
-        self.error: Optional[str] = None
-        self.recognizer = None
+    FER+ predicts one of eight emotions from a 64x64 grayscale face crop.
+    Faces are located with InsightFace's detection model, which is already
+    cached locally by the face-recognition module.
+    """
 
-        if model_asset_path is None:
-            self.error = "MediaPipeEmotionBackend requires a model_asset_path."
-            return
+    LABELS = (
+        "neutral",
+        "happiness",
+        "surprise",
+        "sadness",
+        "anger",
+        "disgust",
+        "fear",
+        "contempt",
+    )
 
-        try:
-            import mediapipe as mp
-            from mediapipe.tasks.python import vision
+    def __init__(self, model_path: str, det_size=(320, 320)):
+        import cv2
+        import onnxruntime as ort
+        from insightface.app import FaceAnalysis
 
-            base_options = mp.tasks.BaseOptions(
-                model_asset_path=model_asset_path,
-                delegate="CPU",
-            )
+        if not os.path.isfile(model_path):
+            raise FileNotFoundError(f"Emotion model not found: {model_path}")
 
-            # Prefer the newer task-based emotion recognizer when available.
-            if hasattr(vision, "EffortEmotionRecognizer"):
-                options = vision.EffortEmotionRecognizerOptions(
-                    model_asset_path=model_asset_path,
-                    delegate="CPU",
-                )
-                self.recognizer = vision.EffortEmotionRecognizer.create_from_options(
-                    options=options,
-                    base_options=base_options,
-                )
-            elif hasattr(vision, "FaceEmotionRecognizer"):
-                options = vision.FaceEmotionRecognizerOptions(
-                    model_asset_path=model_asset_path,
-                    delegate="CPU",
-                )
-                self.recognizer = vision.FaceEmotionRecognizer.create_from_options(
-                    options=options,
-                    base_options=base_options,
-                )
-            else:
-                raise ImportError(
-                    "No emotion recognizer found in installed mediapipe version."
-                )
-        except Exception as exc:  # pragma: no cover - defensive
-            self.error = str(exc)
+        self.cv2 = cv2
+
+        self.session = ort.InferenceSession(
+            model_path,
+            providers=["CPUExecutionProvider"],
+        )
+
+        self.input_name = self.session.get_inputs()[0].name
+        self.output_name = self.session.get_outputs()[0].name
+
+        # Detection only: no recognition/landmark models are needed here.
+        self.face_app = FaceAnalysis(
+            name="buffalo_l",
+            providers=["CPUExecutionProvider"],
+            allowed_modules=["detection"],
+        )
+        self.face_app.prepare(ctx_id=-1, det_size=det_size)
+
+    def _largest_face_box(self, frame):
+        faces = self.face_app.get(frame)
+
+        if len(faces) == 0:
+            return None
+
+        face = max(
+            faces,
+            key=lambda f: (f.bbox[2] - f.bbox[0]) * (f.bbox[3] - f.bbox[1]),
+        )
+
+        height, width = frame.shape[:2]
+
+        x1, y1, x2, y2 = (int(value) for value in face.bbox)
+
+        x1 = max(x1, 0)
+        y1 = max(y1, 0)
+        x2 = min(x2, width)
+        y2 = min(y2, height)
+
+        if x2 <= x1 or y2 <= y1:
+            return None
+
+        return x1, y1, x2, y2
 
     def classify(self, frame) -> Optional[str]:
-        if self.recognizer is None:
-            raise RuntimeError(
-                f"MediaPipe emotion backend is not usable: {self.error}"
-            )
-
-        import cv2
+        import numpy as np
 
         if frame is None:
             return None
 
-        result = self.recognizer.recognize(frame)
+        box = self._largest_face_box(frame)
 
-        emotion = getattr(result, "emotion_category", None) or getattr(
-            result, "emotion", None
-        )
+        if box is None:
+            return "no face"
 
-        if emotion is None:
-            return None
+        x1, y1, x2, y2 = box
 
-        # emotion may be a single value or a list-like of values.
-        try:
-            emotions = list(emotion)
-        except TypeError:
-            emotions = [emotion]
+        gray = self.cv2.cvtColor(frame, self.cv2.COLOR_BGR2GRAY)
+        crop = gray[y1:y2, x1:x2]
 
-        if not emotions:
-            return None
+        face = self.cv2.resize(crop, (64, 64)).astype(np.float32)
+        face = (face - 127.5) / 127.5
+        blob = face.reshape(1, 1, 64, 64)
 
-        return str(emotions[0])
+        scores = self.session.run(
+            [self.output_name],
+            {self.input_name: blob},
+        )[0][0]
+
+        scores = np.asarray(scores, dtype=np.float32)
+        exp = np.exp(scores - scores.max())
+        probabilities = exp / exp.sum()
+
+        return self.LABELS[int(np.argmax(probabilities))]

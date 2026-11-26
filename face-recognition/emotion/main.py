@@ -1,3 +1,4 @@
+import os
 import time
 
 import cv2
@@ -5,10 +6,16 @@ import cv2
 from camera import CameraStream
 
 from emotion import EmotionDetector
-from emotion.detector import MediaPipeEmotionBackend
+from emotion.detector import OnnxEmotionBackend
 
 
 WINDOW_NAME = "Emotion"
+
+MODEL_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "models",
+    "emotion-ferplus-8.onnx",
+)
 
 
 def main() -> None:
@@ -16,11 +23,13 @@ def main() -> None:
     print("Face Emotion Detection")
     print("=" * 50)
 
+    print(f"\nLoading emotion model: {MODEL_PATH}")
+
     detector = EmotionDetector(
-        backend=MediaPipeEmotionBackend(
-            model_asset_path="https://storage.googleapis.com/mediapipe-models/face/emotion/EffortEmotionRecognizer/EffortEmotionRecognizer.task"
-        )
+        backend=OnnxEmotionBackend(MODEL_PATH)
     )
+
+    print("Emotion model loaded.")
 
     camera = CameraStream(mirror=True)
 
@@ -29,6 +38,8 @@ def main() -> None:
         return
 
     camera.start()
+
+    last_emotion = None
 
     try:
         while True:
@@ -41,9 +52,14 @@ def main() -> None:
             try:
                 emotion = detector.detect(frame)
             except Exception as exc:
-                # Emotion backend not configured / model unavailable yet.
                 emotion = "unavailable"
-                print(f"Emotion detection unavailable: {exc}")
+
+                if emotion != last_emotion:
+                    print(f"Emotion detection unavailable: {exc}")
+
+            if emotion != last_emotion:
+                print(f"Emotion: {emotion}")
+                last_emotion = emotion
 
             height, width = frame.shape[:2]
             cv2.putText(
