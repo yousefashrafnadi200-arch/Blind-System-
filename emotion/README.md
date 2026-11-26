@@ -22,11 +22,11 @@
 نزّل الموديل مرة واحدة إلى:
 
 ```
-face-recognition/emotion/models/enet_b0_8_best_vgaf.onnx
+emotion/models/enet_b0_8_best_vgaf.onnx
 ```
 
 ```powershell
-$dir = "face-recognition/emotion/models"
+$dir = "emotion/models"
 New-Item -ItemType Directory -Force $dir | Out-Null
 Invoke-WebRequest `
   -Uri "https://github.com/HSE-asavchenko/face-emotion-recognition/raw/main/models/affectnet_emotions/onnx/enet_b0_8_best_vgaf.onnx" `
@@ -37,19 +37,27 @@ Invoke-WebRequest `
 
 ## التشغيل
 
+أسهل طريقة — انقر مزدوجًا على:
+
+```
+emotion/run.cmd
+```
+
+أو من الطرفية:
+
 ```powershell
-cd face-recognition
+cd emotion
+python main.py
+```
+
+أو من جذر الريبو:
+
+```powershell
 python -m emotion.main
 ```
 
-أو مباشرة:
-
-```powershell
-python emotion\main.py
-```
-
-أو من VS Code: افتح `face-recognition/emotion/main.py` → **F5** → config
-`Python: face-recognition/emotion`.
+أو من VS Code: افتح `emotion/main.py` → **F5** → config `Python: emotion`،
+أو `Ctrl+Shift+B` → **Run emotion**.
 
 نافذة `Emotion` بتعرض آخر مشعر **بالعربي** (وعنوان النافذة كمان)، والطرفية بتطبع
 عند كل تغيّر:
@@ -68,8 +76,17 @@ Emotion: مندهش (Surprise)
 |---|---|
 | `detector.py` | `EmotionDetector` + `OnnxEmotionBackend` (HSEmotion عبر onnxruntime) + ترجمة عربي |
 | `arabic_text.py` | رسم النص العربي على الفريم (Pillow + arabic-reshaper + python-bidi) |
+| `camera.py` | قراءة الكاميرا في خيط منفصل (نسخة خاصة بالوحدة، بدون اعتماد على `face-recognition`) |
 | `main.py` | تشغيل مستقل: كاميرا + عرض النتيجة |
+| `run.cmd` | مشغّل يبحث عن أول Python فيه المتطلبات |
+| `requirements.txt` | حزم الوحدة |
 | `models/` | ملف الموديل (غير مُتتبَّع في git) |
+
+## الاستقلالية
+
+الوحدة **مجلد مستقل في جذر الريبو** (`emotion/`) ومش بتستورد أي حاجة من
+`face-recognition/` — عندها `camera.py` و`requirements.txt` خاصين بيها، وتشتغل
+حتى لو مجلد التعرف على الوجه اتحذف.
 
 ## العرض بالعربي
 

@@ -12,11 +12,11 @@
             "justMyCode": true
         },
         {
-            "name": "Python: face-recognition/emotion",
+            "name": "Python: emotion",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}\\face-recognition\\emotion\\main.py",
-            "cwd": "${workspaceFolder}\\face-recognition",
+            "program": "${workspaceFolder}\\emotion\\main.py",
+            "cwd": "${workspaceFolder}\\emotion",
             "console": "integratedTerminal",
             "python": "C:\\Users\\original\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
             "justMyCode": true

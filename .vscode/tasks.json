@@ -10,6 +10,16 @@
                 "reveal": "always",
                 "panel": "dedicated"
             }
+        },
+        {
+            "label": "Run emotion",
+            "type": "shell",
+            "command": "${workspaceFolder}\\emotion\\run.cmd",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
         }
     ]
 }
