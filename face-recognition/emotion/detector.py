@@ -2,6 +2,32 @@ import os
 from typing import Callable, Optional, Sequence
 
 
+# Arabic labels for display. The model keeps the canonical English names so the
+# output stays stable for logs, logic and future integration.
+LABELS_AR = {
+    "Anger": "غضبان",
+    "Contempt": "مستخف",
+    "Disgust": "مقرف",
+    "Fear": "خايف",
+    "Happiness": "فرحان",
+    "Neutral": "طبيعي",
+    "Sadness": "زعلان",
+    "Surprise": "مندهش",
+    "no face": "مفيش وش",
+    "unknown": "مش معروف",
+    "unavailable": "غير متاح",
+}
+
+
+def to_arabic(label: Optional[str]) -> str:
+    """Translate an emotion label to Arabic (unknown labels pass through)."""
+
+    if not label:
+        return LABELS_AR["unknown"]
+
+    return LABELS_AR.get(str(label), str(label))
+
+
 class EmotionBackend:
     """Interface for a face-emotion backend."""
 
@@ -41,8 +67,12 @@ class EmotionDetector:
     def is_configured(self) -> bool:
         return self.backend is not None or self.predictor is not None
 
-    def detect(self, frame) -> str:
-        """Return the dominant emotion label for `frame`."""
+    def detect(self, frame, arabic: bool = False) -> str:
+        """Return the dominant emotion label for `frame`.
+
+        With ``arabic=True`` the label is translated for display
+        ("Happiness" -> "فرحان").
+        """
 
         if self.backend is not None:
             label = self.backend.classify(frame)
@@ -54,7 +84,8 @@ class EmotionDetector:
                 "`backend`, or set `model_path`."
             )
 
-        return str(label or "unknown")
+        label = str(label or "unknown")
+        return to_arabic(label) if arabic else label
 
 
 class OnnxEmotionBackend(EmotionBackend):

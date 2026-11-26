@@ -13,7 +13,8 @@ if BASE_DIR not in sys.path:
 from camera import CameraStream
 
 from emotion import EmotionDetector
-from emotion.detector import OnnxEmotionBackend
+from emotion.arabic_text import draw_text
+from emotion.detector import OnnxEmotionBackend, to_arabic
 
 
 WINDOW_NAME = "Emotion"
@@ -25,7 +26,36 @@ MODEL_PATH = os.path.join(
 )
 
 
+def _use_utf8_console() -> None:
+    """Keep Arabic prints from crashing on the Windows console."""
+
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
+
+def _show_label(frame, label_ar: str, label_en: str) -> None:
+    try:
+        draw_text(frame, label_ar, font_size=34, color=(0, 255, 0))
+    except Exception:
+        # No Arabic-capable font / Pillow missing: fall back to the Latin label.
+        height = frame.shape[0]
+        cv2.putText(
+            frame,
+            f"Emotion: {label_en}",
+            (10, height - 20),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.9,
+            (0, 255, 0),
+            2,
+        )
+
+
 def main() -> None:
+    _use_utf8_console()
+
     print("=" * 50)
     print("Face Emotion Detection")
     print("=" * 50)
@@ -64,20 +94,18 @@ def main() -> None:
                 if emotion != last_emotion:
                     print(f"Emotion detection unavailable: {exc}")
 
+            label_ar = to_arabic(emotion)
+
             if emotion != last_emotion:
-                print(f"Emotion: {emotion}")
+                print(f"Emotion: {label_ar} ({emotion})")
                 last_emotion = emotion
 
-            height, width = frame.shape[:2]
-            cv2.putText(
-                frame,
-                f"Emotion: {emotion}",
-                (10, height - 20),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.9,
-                (0, 255, 0),
-                2,
-            )
+                try:
+                    cv2.setWindowTitle(WINDOW_NAME, f"Emotion - {label_ar}")
+                except Exception:
+                    pass
+
+            _show_label(frame, label_ar, emotion)
 
             cv2.imshow(WINDOW_NAME, frame)
 

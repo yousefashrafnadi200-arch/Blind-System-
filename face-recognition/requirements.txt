@@ -2,3 +2,6 @@ numpy
 opencv-python
 onnxruntime
 insightface
+pillow
+arabic-reshaper
+python-bidi

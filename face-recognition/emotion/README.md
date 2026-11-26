@@ -6,11 +6,18 @@
 
 **HSEmotion (EfficientNet-B0)** مُدرَّب على AffectNet، بصيغة ONNX.
 
-8 مشاعر (بترتيب المخرجات):
+8 مشاعر (بترتيب المخرجات) — والإنجليزي + العربي:
 
-```
-Anger, Contempt, Disgust, Fear, Happiness, Neutral, Sadness, Surprise
-```
+| الموديل (English) | العرض (عربي) |
+|---|---|
+| Anger | غضبان |
+| Contempt | مستخف |
+| Disgust | مقرف |
+| Fear | خايف |
+| Happiness | فرحان |
+| Neutral | طبيعي |
+| Sadness | زعلان |
+| Surprise | مندهش |
 
 نزّل الموديل مرة واحدة إلى:
 
@@ -44,12 +51,13 @@ python emotion\main.py
 أو من VS Code: افتح `face-recognition/emotion/main.py` → **F5** → config
 `Python: face-recognition/emotion`.
 
-نافذة `Emotion` بتعرض آخر مشعر، والطرفية بتطبع عند كل تغيّر:
+نافذة `Emotion` بتعرض آخر مشعر **بالعربي** (وعنوان النافذة كمان)، والطرفية بتطبع
+عند كل تغيّر:
 
 ```
-Emotion: Happiness
-Emotion: Neutral
-Emotion: Surprise
+Emotion: فرحان (Happiness)
+Emotion: طبيعي (Neutral)
+Emotion: مندهش (Surprise)
 ```
 
 **Esc** أو **q** للإغلاق.
@@ -58,9 +66,25 @@ Emotion: Surprise
 
 | الملف | الوظيفة |
 |---|---|
-| `detector.py` | `EmotionDetector` + `OnnxEmotionBackend` (HSEmotion عبر onnxruntime) |
+| `detector.py` | `EmotionDetector` + `OnnxEmotionBackend` (HSEmotion عبر onnxruntime) + ترجمة عربي |
+| `arabic_text.py` | رسم النص العربي على الفريم (Pillow + arabic-reshaper + python-bidi) |
 | `main.py` | تشغيل مستقل: كاميرا + عرض النتيجة |
 | `models/` | ملف الموديل (غير مُتتبَّع في git) |
+
+## العرض بالعربي
+
+`cv2.putText` مش بيعرف يرسم عربي (بيطلع مربعات أو حروف مقطّعة)، فـ `arabic_text.py`
+بيرسم بـ **Pillow** بعد تشكيل الحروف (`arabic_reshaper`) وترتيب الاتجاه (`python-bidi`)،
+وبعدها بيدمج الصورة على الفريم. الخط من `C:\Windows\Fonts` (Segoe UI / Tahoma).
+
+```python
+from emotion.detector import to_arabic
+from emotion.arabic_text import draw_text
+
+draw_text(frame, to_arabic("Happiness"), font_size=34)   # فرحان
+```
+
+لو Pillow أو الخط مش موجود، بيرجع تلقائيًا للنص الإنجليزي بدل ما يقع.
 
 ## كيف يعمل
 
